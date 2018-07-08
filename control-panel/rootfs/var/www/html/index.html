@@ -3809,6 +3809,14 @@ div[class*='bg-weather'].no-bg-weather {
                         <input id="radio-mob-large" type="radio" name="buttons" ng-click="buttonSize('29vw')" ng-checked="settings.button_size == '29vw'"><label for="radio-mob-large">Large</label>
                     </div>
                 </div>
+                <h3 class="padding-top margin-bottom">Media Players</h3>
+                <p class="w75 padding2-bottom" style="margin:0">Enable this option to only display media players when they are playing content.</p>
+                <div class="container">
+                    <div class="w50 s100 margin-right">
+                        <label>Only Show When Playing</label><br>
+                        <input id="check-show-when-playing" type="checkbox" ng-model="settings.only_show_media_when_playing" ng-click="notification = {};" class="switch off-on"><label for="check-show-when-playing"></label>
+                    </div>
+                </div>
                 <h3 class="padding-top margin-bottom">Debug Mode</h3>
                 <p class="w75 padding2-bottom" style="margin:0">Enable this option to show events and logs in the notification area</p>
                 <div class="container">
