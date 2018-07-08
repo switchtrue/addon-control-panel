@@ -2223,7 +2223,6 @@ console.log(entity,attribute,page)
         }
 
         $scope.weatherBg = function(condition){
-
             if (condition.match(/sun|sonne|sol/i)){
                 $scope.events.weather = 'sunny';
             } else if (condition.match(/partly/i)){
@@ -3308,31 +3307,31 @@ div[class^=grid] {
     position: relative;
 }
 
-.bg-color .bg-weather-clear {
+.bg-weather-clear {
     background-image:url(/media/1600/40/clear.png);
 }
 
-.bg-color .bg-weather-thunder {
+.bg-weather-thunder {
     background-image:url(/media/1600/40/thunder.png);
 }
 
-.bg-color .bg-weather-cloudy {
+.bg-weather-cloudy {
     background-image:url(/media/1600/40/partly-cloudy.png);
 }
 
-.bg-color .bg-weather-partly-cloudy {
+.bg-weather-partly-cloudy {
     background-image:url(/media/1600/40/partly-cloudy.png);
 }
 
-.bg-color .bg-weather-sunny {
+.bg-weather-sunny {
     background-image:url(/media/1600/40/clear.png);
 }
 
-.bg-color .bg-weather-rain {
+.bg-weather-rain {
     background-image:url(/media/1600/40/rain.png);
 }
 
-.bg-color .bg-weather-heavy-rain {
+.bg-weather-heavy-rain {
     background-image:url(/media/1600/40/heavy-rain.png);
 }
 
@@ -3855,8 +3854,8 @@ div[class*='bg-weather'].no-bg-weather {
                 <div class="container">
                     <div class="w20 s50 square margin clickable"
                         ng-repeat="i in [1,2,3,4,5,6,7,8,9,10,11,12,13,14]"
-                        ng-click="settings.background_color = '';settings.background = 'https://reformedreality.com/media/1920/75/hacp-bg/bg-'+i+'.jpg'"
-                        style="background-image:url(https://reformedreality.com/media/300/40/hacp-bg/bg-{{i}}.jpg)"
+                        ng-click="settings.background_color = ''; settings.background = '/media/1920/75/hacp-bg/bg-'+i+'.jpg'"
+                        ng-style="{ 'background-image': 'url(/media/300/40/hacp-bg/bg-{{i}}.jpg)' }"
                     >
                     </div>
                 </div>
@@ -4080,7 +4079,7 @@ div[class*='bg-weather'].no-bg-weather {
 
                 <p class="bold pt-3">Entities that will be included in this scene</p>
                 <div class="grid25 pt-1 entity-list">
-                    <div class="entity {{settings.buttons}} {{ent | getType}}" ng-repeat="ent in groups[view.selected_group].attributes.entity_id | orderBy:ent track by $index" ng-if="ent && !match(ent,'custom_scene')" style="background-image:url({{settings.server_url}}{{entity[ent].attributes.entity_picture}})">
+                    <div class="entity {{settings.buttons}} {{ent | getType}}" ng-repeat="ent in groups[view.selected_group].attributes.entity_id | orderBy:ent track by $index" ng-if="ent && !match(ent,'custom_scene')" ng-style="{ 'background-image': 'url({{settings.server_url}}{{entity[ent].attributes.entity_picture}})' }">
                         <p class="name capitalize" ng-bind="entity[ent].attributes.friendly_name"></p>
                         <p class="state" ng-bind="entity[ent].state"></p>
                         <p class="value" class="capitalize" ng-show="match(entity[ent].entity_id,'sensor')"><span ng-bind="entity[ent].state"></span><span ng-bind="entity[ent].attributes.unit_of_measurement"></span></p>
