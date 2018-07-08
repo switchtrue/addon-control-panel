@@ -1288,6 +1288,26 @@ a.mobile-show,span.mobile-show,svg.mobile-show{display:inline !important;}
             $scope.settings.button_size = val;
         }
 
+        $scope.dismissNotification = function(notificationId) {
+            var url = $scope.settings.server_url + '/api/services/persistent_notification/dismiss?api_password=' + $scope.settings.server_api_password;
+            var data = { "notification_id": notificationId }
+            $http({
+                method: 'POST',
+                url: url,
+                data: data
+            }).then(function (data, status, headers, config) {
+                var idx = $scope.notifications.findIndex((n) => n.id === notificationId);
+                $scope.notifications.splice(idx, 1);
+            });
+        }
+
+        $scope.dismissAllNotifications = function() {
+            var notificationsClone = $scope.notifications.slice(0);
+            for (var i = 0; i < notificationsClone.length; i++) {
+                $scope.dismissNotification(notificationsClone[i].id);
+            }
+        }
+
         $scope.startWebSocket = function(){
             var ws_url = $scope.settings.server_url.replace(/http|https/i,'ws');
             ws = new WebSocket(ws_url+'/api/websocket?api_password='+$scope.settings.server_api_password);
@@ -1361,31 +1381,25 @@ a.mobile-show,span.mobile-show,svg.mobile-show{display:inline !important;}
 
                     } else if (data.event.data.entity_id.match(/^persistent_notification/) && $scope.settings.notifications.show === true){
 
-                        $scope.view.top_right = 'notification';
-                        $scope.notification = {};
-                        $scope.notification.title = data.event.data.new_state.attributes.title;
-                        $scope.notification.message = data.event.data.new_state.attributes.message;
-                        $scope.notification.time = data.event.time_fired;
+                        if (!$scope.notifications) {
+                            $scope.notifications = [];
+                        }
+                        $scope.notifications.push({
+                            'title': data.event.data.new_state.attributes.title,
+                            'message': data.event.data.new_state.attributes.message,
+                            'time': data.event.time_fired,
+                            'id': data.event.data.entity_id.replace(/persistent_notification\./, '')
+                        });
 
-                        if ($scope.notification.title.match(/bell/i)){
+                        if (data.event.data.new_state.attributes.title.match(/bell/i)){
                             bell_chime.play();
                         }
 
                         if ($scope.settings.notifications.auto_dismiss === true){
-                            var url = $scope.settings.server_url+'/api/services/persistent_notification/dismiss?api_password='+$scope.settings.server_api_password;
-                            var data = {"notification_id": data.event.data.entity_id.replace(/persistent_notification\./,'')}
+                            var notificationId = data.event.data.entity_id.replace(/persistent_notification\./,'');
                             setTimeout(function(){
-                                $scope.$apply(function(){
-                                    $http({
-                                        method: 'POST',
-                                        url: url,
-                                        data:data
-                                    }).then(function (data, status, headers, config) {
-                                        $scope.notification = {};
-                                        $scope.view.top_right = 'weather';
-                                    });
-                                });
-                            },$scope.settings.notifications.timeout);
+                                $scope.dismissNotification(notificationId);
+                            }, $scope.settings.notifications.timeout);
                         }
 
                     } else {
@@ -3139,6 +3153,10 @@ div[class^=grid] {
     max-height:100%;
 }
 
+.grid_notification {
+    grid-template-columns: calc(var(--grid-size) * 2) !important;
+}
+
 .grid0, .grid1, .grid2, .grid3, .grid4 {
     grid-template-columns: var(--grid-size) !important;
 }
@@ -3247,8 +3265,14 @@ div[class^=grid] {
 
 .entity.sensor .value,
 .entity.climate .value,
+.entity.notification .title {
     font-size:1.4vw;
     text-transform: capitalize;
+}
+
+.entity.notification .time {
+    position: absolute;
+    top: 1em;
 }
 
 .entity.sensor .name,
@@ -3263,6 +3287,15 @@ div[class^=grid] {
     font-size: 0.7vw;
     line-height: 0.8vw;
     padding: 0 0.7rem;
+}
+
+.entity.notification {
+    background-color: rgb(255, 204, 0, 0.8);
+    color: rgb(0,0,0);
+}
+
+.heading .dismiss-all {
+    font-size: 0.9em;
 }
 
 .entity .media-controls {
@@ -3932,11 +3965,7 @@ div[class*='bg-weather'].no-bg-weather {
                     </span>
                 </h3>
             </div>
-            <div class="w50 top text-right" ng-show="view.top_right == 'notification'">
-                <h1 class="capitalize padding1-bottom"><span ng-bind="notification.title"></span></h1>
-                <h3 ng-bind="notification.message"></h3>
-                <h3 ng-bind="notification.time | date:'HH:mm:ss'"></h3>
-            </div>
+
             <div class="w50 top text-right debug" ng-show="view.top_right == 'debug'">
                 <div class="container">
                     <div class="w50 top text-left margin-right">
@@ -3958,6 +3987,23 @@ div[class*='bg-weather'].no-bg-weather {
         </div>
     </div>
     <div class="controls overflow-x layer-top">
+        
+        <div ng-if="notifications && notifications.length > 0" class="group">
+            <div class="heading">
+                <p class="bold600 capitalize" ng-hide="true">Notifications</p>
+                <p class="bold600 capitalize">Notifications</p>
+                <p class="dismiss-all" ng-if="notifications.length > 1" ng-click="dismissAllNotifications()">Dismiss All</p>
+            </div>
+            <div class="groups padding2">
+                <div class="grid_notification">
+                    <div class="entity notification" ng-repeat="notification in notifications | orderBy:'-time'" ng-click="dismissNotification(notification.id)">
+                        <p class="time" ng-bind="notification.time | date:'HH:mm:ss'"></p>
+                        <p class="name title capitalize" ng-bind="notification.title"></p>
+                        <p class="value message" ng-bind="notification.message"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="group" ng-repeat="group in groups | orderBy:'order' track by $index" ng-hide="group.view == false;">
             <div class="heading">
