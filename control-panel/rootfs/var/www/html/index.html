@@ -1867,6 +1867,20 @@ console.log(entity,attribute,page)
                         } else {
                             var data = {"entity_id": entity.entity_id}
                         }
+                    } else if (entity.entity_id.split('.')[0] == 'climate') {
+                        if (entity.attributes.operation_list.indexOf(entity.state) > -1) {
+                            var url = $scope.settings.server_url + '/api/services/climate/turn_off';
+                        } else if (entity.state == 'off') {
+                            var url = $scope.settings.server_url + '/api/services/climate/turn_on';
+                        } else {
+                            var url = $scope.settings.server_url + '/api/services/light/toggle';
+                        }
+
+                        if (entity.entity_ids) {
+                            var data = { "entity_id": entity.entity_ids }
+                        } else {
+                            var data = { "entity_id": entity.entity_id }
+                        }
                     }
 
                 }
@@ -2433,6 +2447,21 @@ console.log(entity,attribute,page)
             if (entity.entity_id.match(/camera\./)){
                 $scope.popup = angular.copy(entity);
                 $scope.view.page = 'camera';
+            }
+            if (entity.entity_id.match(/climate\./)) {
+                $scope.popup = angular.copy(entity);
+                $scope.view.page = 'entity';
+                $scope.popup.attributes.fan_list = entity.attributes.fan_list;
+                $scope.popup.attributes.fan_mode = entity.attributes.fan_mode;
+                $scope.popup.attributes.max_temp = entity.attributes.max_temp;
+                $scope.popup.attributes.min_temp = entity.attributes.min_temp;
+                $scope.popup.attributes.operation_list = entity.attributes.operation_list;
+                $scope.popup.attributes.operation_mode = entity.attributes.operation_mode;
+                $scope.popup.attributes.swing_list = entity.attributes.swing_list;
+                $scope.popup.attributes.swing_mode = entity.attributes.swing_mode;
+                $scope.popup.attributes.temperature = entity.attributes.temperature;
+                $scope.popup.attributes.unit_of_measurement = entity.attributes.unit_of_measurement;
+                $scope.view.entity_settings_page = 'settings_climate';
             }
         }
 
@@ -3212,18 +3241,20 @@ div[class^=grid] {
     background-color: rgba(255,255,255,0.5);
 } */
 
-.entity.media_player .name,
+.entity.media_player:not(.off) .name,
 .entity.camera .name {
     display:none;
 }
 
-.entity.sensor .value {
+.entity.sensor .value,
+.entity.climate .value,
     font-size:1.4vw;
     text-transform: capitalize;
 }
 
 .entity.sensor .name,
-.entity:not(.sensor) .value  {
+.entity.climate .state,
+.entity:not(.sensor):not(.climate) .value {
     display:block;
     width:100%;
     position:absolute;
@@ -3481,7 +3512,39 @@ div[class*='bg-weather'].no-bg-weather {
                 <p class="float-right"><span ng-bind="popup.attributes.color_temp"></span> MiReds</p>
                 <p>Color Temperature</p>
                 <input type="range" min="150" max="500" step="25" ng-model="popup.attributes.color_temp" ng-mouseup="toggle(popup,'light/turn_on')" my-touchend="toggle(popup,'light/turn_on')">
+            </div>
 
+            <div ng-show="view.entity_settings_page == 'settings_climate'">
+                <h3 class="margin-bottom" ng-bind="popup.attributes.friendly_name"></h3>
+                <p class="w60 padding2-bottom" style="margin:0"></p>
+                <p class="float-right" ng-bind="popup.attributes.temperature + popup.attributes.unit_of_measurement"></p>
+                <p class="margin-top">Target Temperature</p>
+                <input type="range" min="{{ popup.attributes.min_temp }}" max="{{ popup.attributes.max_temp }}" step="1" value="{{entity[popup.entity_id].attributes.temperature}}" ng-model="popup.attributes.temperature"
+                    ng-mouseup="toggle(popup,'light/turn_on')" my-touchend="toggle(popup,'light/turn_on')">
+                <br>
+                <br>
+            
+                <p class="margin-top">Operation</p>
+                <select ng-model="popup.attributes.operation_mode">
+                    <option ng-repeat="option in popup.attributes.operation_list" value="{{option}}">{{option}}</option>
+                </select>
+                <br>
+                <br>
+
+                <p class="margin-top">Fan mode</p>
+                <select ng-model="popup.attributes.fan_mode">
+                    <option ng-repeat="option in popup.attributes.fan_list" value="{{option}}">{{option}}</option>
+                </select>
+                <br>
+                <br>
+
+                <p class="margin-top">Swing mode</p>
+                <select ng-model="popup.attributes.swing_mode">
+                    <option ng-repeat="option in popup.attributes.swing_list" value="{{option}}">{{option}}</option>
+                </select>
+                <br>
+                <br>
+            
             </div>
 
             <div ng-show="view.entity_settings_page == 'edit'">
@@ -3630,6 +3693,10 @@ div[class*='bg-weather'].no-bg-weather {
                     </div>
                 </div>
 
+            </div>
+
+            <div ng-show="view.entity_settings_page == 'climate'">
+                <h3 class="margin-bottom">Climate</h3>
             </div>
         </div>
     </div>
@@ -3898,10 +3965,12 @@ div[class*='bg-weather'].no-bg-weather {
             <div class="groups padding2">
                 <div class="grid{{group.attributes.entity_id.length+view.edit_mode+view.button_size}}">
 
-                    <div class="entity {{entity[ent].state}} {{ent | getType}}" ng-repeat="ent in group.attributes.entity_id | orderBy:ent track by $index" ng-if="ent" ng-click="toggle(entity[ent],false,group.entity_id,group)" on-long-press="showEntity(entity[ent],group.entity_id)" style="background-image:url({{settings.server_url}}{{entity[ent].attributes.entity_picture}})">
-                        <p class="name capitalize" ng-bind="entity[ent].attributes.friendly_name"></p>
-                        <p class="state" ng-bind="entity[ent].state"></p>
+                    <div class="entity {{entity[ent].state}} {{ent | getType}}" ng-repeat="ent in group.attributes.entity_id | orderBy:ent track by $index" ng-if="ent && ((match(entity[ent].entity_id,'media_player') && settings.only_show_media_when_playing) ? entity[ent].state !== 'off' : true)" ng-click="toggle(entity[ent],false,group.entity_id,group)" on-long-press="showEntity(entity[ent],group.entity_id)" ng-style="{ 'background-image': 'url({{settings.server_url}}{{entity[ent].attributes.entity_picture}})' }">
+                        <p class="name capitalize" ng-if="!match(entity[ent].entity_id,'climate')" ng-bind="entity[ent].attributes.friendly_name"></p>
+                        <p class="value capitalize" ng-if="match(entity[ent].entity_id,'climate')" ng-bind="entity[ent].attributes.current_temperature + entity[ent].attributes.unit_of_measurement"></p>
+                        <p class="state" ng-if="!match(entity[ent].entity_id,'climate')" ng-bind="entity[ent].state"></p>
                         <p class="value" class="capitalize" ng-show="match(entity[ent].entity_id,'sensor')"><span ng-bind="entity[ent].state"></span><span ng-bind="entity[ent].attributes.unit_of_measurement"></span></p>
+                        <p class="state capitalize" ng-if="match(entity[ent].entity_id,'climate') && entity[ent].state !== 'off'" ng-bind="entity[ent].state + ' to ' + entity[ent].attributes.temperature + entity[ent].attributes.unit_of_measurement"></p>
                         <div class="media-controls"><i class="fas fa-pause" ng-show="entity[ent].state == 'playing'"></i><i class="fas fa-play" ng-show="entity[ent].state == 'paused' || entity[ent].state == 'idle'"></i></div>
                         <img ng-if="entity[ent].attributes.entity_picture && !match(entity[ent].attributes.entity_picture,'mjpg|mjpeg')" class="stream" ng-src="{{entity[ent].attributes.entity_picture}}&t=" onload='setTimeout(function() {src = src.substring(0, (src.lastIndexOf("t=")+2))+(new Date()).getTime()}, 2000)' onerror='setTimeout(function() {src = src.substring(0, (src.lastIndexOf("t=")+2))+(new Date()).getTime()}, 5000)' alt='' />
                         <img ng-if="entity[ent].attributes.entity_picture && match(entity[ent].attributes.entity_picture,'mjpg|mjpeg')" class="stream" ng-src="{{entity[ent].attributes.entity_picture}}"/>
