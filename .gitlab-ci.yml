@@ -2,7 +2,7 @@
 image: docker:latest
 
 variables:
-  ADDON_GITHUB_REPO: hassio-addons/addon-control-panel
+  ADDON_GITHUB_REPO: switchtrue/addon-control-panel
   ADDON_SLUG: control-panel
   ADDON_TARGET: control-panel
   DOCKER_DRIVER: overlay2
@@ -412,7 +412,7 @@ manifest:edge:
 publish:stable:
   <<: *publish
   variables:
-    REPOSITORY: hassio-addons/repository
+    REPOSITORY: switchtrue/repository
   only:
     - /^v\d+\.\d+\.\d+(?:(?:(?:\+|\.)?[a-zA-Z0-9]+)*)?$/
   environment:
@@ -421,7 +421,7 @@ publish:stable:
 publish:beta:
   <<: *publish
   variables:
-    REPOSITORY: hassio-addons/repository-beta
+    REPOSITORY: switchtrue/repository-beta
   only:
     - /^v\d+\.\d+\.\d+(?:-(?:beta|rc)(?:(?:(?:\+|\.)?[a-zA-Z0-9]+)*)?)?$/
   environment:
@@ -430,7 +430,7 @@ publish:beta:
 publish:edge:
   <<: *publish
   variables:
-    REPOSITORY: hassio-addons/repository-edge
+    REPOSITORY: switchtrue/repository-edge
   only:
     - master
   environment:
